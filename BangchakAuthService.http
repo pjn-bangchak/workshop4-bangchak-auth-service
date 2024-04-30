@@ -1,0 +1,6 @@
+@BangchakAuthService_HostAddress = http://localhost:5152
+
+GET {{BangchakAuthService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
