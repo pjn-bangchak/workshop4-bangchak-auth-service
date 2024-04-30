@@ -1,4 +1,13 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using BangchakAuthService.Areas.Identity.Data;
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("BangchakAuthServiceIdentityDbContextConnection") ?? throw new InvalidOperationException("Connection string 'BangchakAuthServiceIdentityDbContextConnection' not found.");
+
+builder.Services.AddDbContext<BangchakAuthServiceIdentityDbContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = false)
+.AddEntityFrameworkStores<BangchakAuthServiceIdentityDbContext>();
 
 // Add services to the container.
 
