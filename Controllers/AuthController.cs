@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
 
     // localhost:port/api/v1/Auth/Login
     [HttpPost]
-    public IActionResult Login() {
+    public IActionResult Login([FromBody] LoginDto loginDto) {
         return Ok(new {message = "Hello Login"});
     }
 }
