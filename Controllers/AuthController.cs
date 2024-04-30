@@ -1,4 +1,6 @@
+using BangchakAuthService.Areas.Identity.Data;
 using BangchakAuthService.ModelsDto;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BangchakAuthService.Controllers;
@@ -7,6 +9,12 @@ namespace BangchakAuthService.Controllers;
 [Route("api/v1/[controller]/[action]")] // localhost:port/api/v1/Auth
 public class AuthController : ControllerBase
 {
+    private readonly UserManager<User> _userManager;
+
+    public AuthController(UserManager<User> userManager) {
+        _userManager = userManager;
+    }
+
     // localhost:port/api/v1/Auth/Home
     [HttpGet]
     public IActionResult Home() {
@@ -15,8 +23,16 @@ public class AuthController : ControllerBase
 
     // localhost:port/api/v1/Auth/Register
     [HttpPost]
-    public IActionResult Register([FromBody] RegisterDto registerDto) {
-        return Ok(new {message = registerDto.Fullname });
+    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto) {
+        
+        var bcpUser = new User {
+            Email = registerDto.Email,
+            UserName = registerDto.Email,
+            Fullname = registerDto.Fullname
+        };
+        
+        await _userManager.CreateAsync(bcpUser, registerDto.Password);
+        return Ok(new {message = "ลงทะเบียนสำเร็จ" });
     }
 
     // localhost:port/api/v1/Auth/Login
