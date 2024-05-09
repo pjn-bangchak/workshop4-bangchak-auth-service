@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
         using var channel = connection.CreateModel();
 
         channel.ExchangeDeclare("akenarin-ex.auth.fanout", ExchangeType.Fanout, durable: true);
-        channel.QueueDeclare("akenarin-q.auth.fanout", durable: true);
+        channel.QueueDeclare("akenarin-q.auth.fanout", durable: true, false, false, null);
         channel.QueueBind("akenarin-q.auth.fanout", "akenarin-ex.auth.fanout", string.Empty);
 
         var uId = bcpUser.Id;
