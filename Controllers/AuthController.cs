@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 
 namespace BangchakAuthService.Controllers;
 
@@ -51,6 +53,25 @@ public class AuthController : ControllerBase
             return BadRequest(result.Errors);
         }
 
+        // send new user to rabbitmq
+        var factory = new ConnectionFactory
+        {
+            Uri = new Uri("amqp://rabbitmq:1jj395qu@206.189.84.49:5672")
+        };
+        using var connection = factory.CreateConnection();
+        using var channel = connection.CreateModel();
+
+        channel.ExchangeDeclare("akenarin-ex.auth.fanout", ExchangeType.Fanout, durable: true);
+        channel.QueueDeclare("akenarin-q.auth.fanout", durable: true);
+        channel.QueueBind("akenarin-q.auth.fanout", "akenarin-ex.auth.fanout", string.Empty);
+
+        var uId = bcpUser.Id;
+        var uFullname = bcpUser.Fullname;
+        var message = new { uId, uFullname };
+        var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+
+        channel.BasicPublish("akenarin-ex.auth.fanout", string.Empty, null, body);
+
         return Ok(new { message = "ลงทะเบียนสำเร็จ" });
     }
 
@@ -68,7 +89,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
         {
             return Unauthorized(new { message = "รหัสผ่านไม่ถูกต้อง" });
-        }
+        }        
 
         return await CreateToken(user.Email!);
     }
