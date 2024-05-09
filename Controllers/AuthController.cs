@@ -10,9 +10,11 @@ namespace BangchakAuthService.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
 
-    public AuthController(UserManager<User> userManager) {
+    public AuthController(UserManager<User> userManager, SignInManager<User> signInManager) {
         _userManager = userManager;
+        _signInManager = signInManager;
     }
 
     // localhost:port/api/v1/Auth/Home
@@ -31,7 +33,12 @@ public class AuthController : ControllerBase
             Fullname = registerDto.Fullname
         };
         
-        await _userManager.CreateAsync(bcpUser, registerDto.Password);
+        var result = await _userManager.CreateAsync(bcpUser, registerDto.Password);
+
+        if (!result.Succeeded) {
+            return BadRequest(result.Errors);
+        }
+
         return Ok(new {message = "ลงทะเบียนสำเร็จ" });
     }
 
