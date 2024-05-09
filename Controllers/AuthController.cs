@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using BangchakAuthService.Areas.Identity.Data;
 using BangchakAuthService.ModelsDto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -114,6 +115,20 @@ public class AuthController : ControllerBase
             expiration = token.ValidTo
         });
 
+    }
+
+    // get user's profile
+    [Authorize]
+    [HttpGet] // auth/profile
+    public async Task<IActionResult> Profile() {
+        var userId = User.Claims.First(p => p.Type == "userId").Value;
+        var userProfile = await _userManager.FindByIdAsync(userId);
+        if (userProfile == null) return NotFound();
+        return Ok(new {
+            userProfile.Id,
+            userProfile.Fullname,
+            userProfile.Email
+        });
     }
 
 }
