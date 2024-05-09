@@ -44,7 +44,17 @@ public class AuthController : ControllerBase
 
     // localhost:port/api/v1/Auth/Login
     [HttpPost]
-    public IActionResult Login([FromBody] LoginDto loginDto) {
-        return Ok(new {message = "Hello Login"});
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto) {
+        var user = await _userManager.FindByEmailAsync(loginDto.Email);
+        if (user == null) {
+            return NotFound();
+        }
+
+        var result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, false, false);
+        if (!result.Succeeded) {
+            return Unauthorized(new {message = "รหัสผ่านไม่ถูกต้อง"});
+        }
+
+        return Ok(new {message = "เข้าระบบสำเร็จ แล้วสร้าง token"});
     }
 }
