@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using BangchakAuthService.Areas.Identity.Data;
 using BangchakAuthService.ModelsDto;
+using BangchakAuthService.Services.RabbitMQ;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +21,15 @@ public class AuthController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
+    
+    private readonly IRabbitMQConnectionManager _rabbitMQ;
 
-    public AuthController(IConfiguration configuration, UserManager<User> userManager, SignInManager<User> signInManager)
+    public AuthController(IRabbitMQConnectionManager rabbitMQ, IConfiguration configuration, UserManager<User> userManager, SignInManager<User> signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _rabbitMQ = rabbitMQ;
     }
 
     // localhost:port/api/v1/Auth/Home
@@ -54,23 +59,48 @@ public class AuthController : ControllerBase
         }
 
         // send new user to rabbitmq
-        var factory = new ConnectionFactory
-        {
-            Uri = new Uri("amqp://rabbitmq:1jj395qu@206.189.84.49:5672")
-        };
-        using var connection = factory.CreateConnection();
-        using var channel = connection.CreateModel();
+        // var factory = new ConnectionFactory
+        // {
+        //     Uri = new Uri("amqp://rabbitmq:1jj395qu@206.189.84.49:5672")
+        // };
+        // using var connection = factory.CreateConnection();
+        // using var channel = connection.CreateModel();
 
-        channel.ExchangeDeclare("akenarin-ex.auth.fanout", ExchangeType.Fanout, durable: true);
-        channel.QueueDeclare("akenarin-q.auth.fanout", durable: true, false, false, null);
-        channel.QueueBind("akenarin-q.auth.fanout", "akenarin-ex.auth.fanout", string.Empty);
+        // channel.ExchangeDeclare("akenarin-ex.auth.fanout", ExchangeType.Fanout, durable: true);
+        // channel.QueueDeclare("akenarin-q.auth.fanout", durable: true, false, false, null);
+        // channel.QueueBind("akenarin-q.auth.fanout", "akenarin-ex.auth.fanout", string.Empty);
 
-        var uId = bcpUser.Id;
-        var uFullname = bcpUser.Fullname;
-        var message = new { uId, uFullname };
-        var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+        // var uId = bcpUser.Id;
+        // var uFullname = bcpUser.Fullname;
+        // var message = new { uId, uFullname };
+        // var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-        channel.BasicPublish("akenarin-ex.auth.fanout", string.Empty, null, body);
+        // channel.BasicPublish("akenarin-ex.auth.fanout", string.Empty, null, body);
+
+            var channel = _rabbitMQ.GetChannel();
+            channel.ExchangeDeclare(exchange: "akenarin.auth.ex", type: "fanout", durable: true);
+            channel.QueueDeclare(queue: "akenarin.auth.q", durable: true, exclusive: false, autoDelete: false, arguments: null);
+            channel.QueueBind(queue: "akenarin.auth.q", exchange: "akenarin.auth.ex", routingKey: string.Empty);
+
+            var message = new { UserId = bcpUser.Id, bcpUser.Fullname };
+            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+
+            var properties = channel.CreateBasicProperties();
+            properties.ContentType = "application/json";
+            properties.ContentEncoding = "UTF-8";
+            properties.CorrelationId = bcpUser.Id;
+            properties.Type = "UserCreated";
+            properties.AppId = Assembly.GetEntryAssembly()!.FullName;
+            properties.Headers = new Dictionary<string, object>()
+            {
+                { "serviceName", "BGPAuthService" },
+                { "createdAt", DateTime.UtcNow.ToString() },
+            };
+
+            channel.BasicPublish(exchange: "akenarin.auth.ex",
+                                 routingKey: string.Empty,
+                                 basicProperties: properties,
+                                 body: body);
 
         return Ok(new { message = "ลงทะเบียนสำเร็จ" });
     }

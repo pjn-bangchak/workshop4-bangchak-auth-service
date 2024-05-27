@@ -3,6 +3,8 @@ using BangchakAuthService.Areas.Identity.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BangchakAuthService.Services.RabbitMQ;
+using BGTAuthService.Consumers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add Cors Service
@@ -45,6 +47,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//custom service
+builder.Services.AddSingleton<IRabbitMQConnectionManager, RabbitMQConnectionManager>();
+
+// add rabbitmq consumers
+builder.Services.AddHostedService<ErrorConsumer>();
 
 var app = builder.Build();
 
