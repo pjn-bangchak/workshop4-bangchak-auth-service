@@ -26,11 +26,11 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
     env:
-      CONTAINER_NAME: '${{ github.actor }}-auth-service-api'
+      CONTAINER_NAME: 'akenarin-auth-service-api'
       DOCKER_IMAGE_URL: 'ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{  github.ref_name }}'
     steps:
     - name: executing remote ssh commands using password
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: '146.190.103.98'
         username: 'root'
