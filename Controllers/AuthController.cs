@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
-    
+
     private readonly IRabbitMQConnectionManager _rabbitMQ;
 
     public AuthController(IRabbitMQConnectionManager rabbitMQ, IConfiguration configuration, UserManager<User> userManager, SignInManager<User> signInManager)
@@ -77,30 +77,30 @@ public class AuthController : ControllerBase
 
         // channel.BasicPublish("akenarin-ex.auth.fanout", string.Empty, null, body);
 
-            var channel = _rabbitMQ.GetChannel();
-            channel.ExchangeDeclare(exchange: "akenarin.auth.ex", type: "fanout", durable: true);
-            channel.QueueDeclare(queue: "akenarin.auth.q", durable: true, exclusive: false, autoDelete: false, arguments: null);
-            channel.QueueBind(queue: "akenarin.auth.q", exchange: "akenarin.auth.ex", routingKey: string.Empty);
+        var channel = _rabbitMQ.GetChannel();
+        channel.ExchangeDeclare(exchange: "akenarin.auth.ex", type: "fanout", durable: true);
+        channel.QueueDeclare(queue: "akenarin.auth.q", durable: true, exclusive: false, autoDelete: false, arguments: null);
+        channel.QueueBind(queue: "akenarin.auth.q", exchange: "akenarin.auth.ex", routingKey: string.Empty);
 
-            var message = new { UserId = bcpUser.Id, bcpUser.Fullname };
-            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+        var message = new { UserId = bcpUser.Id, bcpUser.Fullname };
+        var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
-            var properties = channel.CreateBasicProperties();
-            properties.ContentType = "application/json";
-            properties.ContentEncoding = "UTF-8";
-            properties.CorrelationId = bcpUser.Id;
-            properties.Type = "UserCreated";
-            properties.AppId = Assembly.GetEntryAssembly()!.FullName;
-            properties.Headers = new Dictionary<string, object>()
+        var properties = channel.CreateBasicProperties();
+        properties.ContentType = "application/json";
+        properties.ContentEncoding = "UTF-8";
+        properties.CorrelationId = bcpUser.Id;
+        properties.Type = "UserCreated";
+        properties.AppId = Assembly.GetEntryAssembly()!.FullName;
+        properties.Headers = new Dictionary<string, object>()
             {
                 { "serviceName", "BGPAuthService" },
                 { "createdAt", DateTime.UtcNow.ToString() },
             };
 
-            channel.BasicPublish(exchange: "akenarin.auth.ex",
-                                 routingKey: string.Empty,
-                                 basicProperties: properties,
-                                 body: body);
+        channel.BasicPublish(exchange: "akenarin.auth.ex",
+                             routingKey: string.Empty,
+                             basicProperties: properties,
+                             body: body);
 
         return Ok(new { message = "ลงทะเบียนสำเร็จ" });
     }
@@ -119,7 +119,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
         {
             return Unauthorized(new { message = "รหัสผ่านไม่ถูกต้อง" });
-        }        
+        }
 
         return await CreateToken(user.Email!);
     }
@@ -171,11 +171,13 @@ public class AuthController : ControllerBase
     // get user's profile
     [Authorize]
     [HttpGet] // auth/profile
-    public async Task<IActionResult> Profile() {
+    public async Task<IActionResult> Profile()
+    {
         var userId = User.Claims.First(p => p.Type == "userId").Value;
         var userProfile = await _userManager.FindByIdAsync(userId);
         if (userProfile == null) return NotFound();
-        return Ok(new {
+        return Ok(new
+        {
             userProfile.Id,
             userProfile.Fullname,
             userProfile.Email
