@@ -55,7 +55,7 @@ jobs:
   #   - name: Execute SSH commmands on remote server
   #     uses: JimCronqvist/action-ssh@master
   #     with:
-  #       hosts: 'root@146.190.103.98'
+  #       hosts: 'root@146.190.103.98test'
   #       privateKey: ${{ secrets.My_PRIVATE_KEY }}
   #       command: |
   #         docker logout ghcr.io
