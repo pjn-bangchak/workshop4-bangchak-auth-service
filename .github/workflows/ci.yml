@@ -39,7 +39,7 @@ jobs:
         script: |
           whoami
           docker logout ghcr.io
-          docker login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}  ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u github.actor --password-stdin
           docker rm -f ${{ env.CONTAINER_NAME }}
           docker pull ${{ env.DOCKER_IMAGE_URL }}
           docker run --restart=always -d --name ${{ env.CONTAINER_NAME }} -p 9002:8080 ${{ env.DOCKER_IMAGE_URL }}
