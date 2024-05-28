@@ -44,7 +44,7 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
     env:
-      CONTAINER_NAME: 'akenarin-node-app'
+      CONTAINER_NAME: 'akenarin-auth-service-api'
       DOCKER_IMAGE_URL: 'ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{  github.ref_name }}'
     steps:
     - name: Execute SSH commmands on remote server
