@@ -7,57 +7,57 @@ on:
 
 jobs:
 
-  # release-docker-image-job:
-  #   # runs-on: ubuntu-latest
-  #   runs-on: self-hosted
-  #   permissions: write-all
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - uses: mr-smithers-excellent/docker-build-push@v6
-  #       with:
-  #         image: ${{ github.event.repository.name }}
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-
-  auto-deploy-docker-job:
-    # needs: release-docker-image-job
+  release-docker-image-job:
     # runs-on: ubuntu-latest
     runs-on: self-hosted
-    env:
-      CONTAINER_NAME: 'akenarin-auth-service-api'
-      DOCKER_IMAGE_URL: 'ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{  github.ref_name }}'
+    permissions: write-all
     steps:
-    - name: executing remote ssh commands using password
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: '146.190.103.98'
-        username: 'root'
-        password: '$Admin_1jj395qu'
-        port: '22'
-        script: |
-          whoami
+      - uses: actions/checkout@v4
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          image: ${{ github.event.repository.name }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
   # auto-deploy-docker-job:
-  #   needs: release-docker-image-job
+  #   # needs: release-docker-image-job
   #   # runs-on: ubuntu-latest
   #   runs-on: self-hosted
   #   env:
-  #     CONTAINER_NAME: 'akenarin-node-app'
+  #     CONTAINER_NAME: 'akenarin-auth-service-api'
   #     DOCKER_IMAGE_URL: 'ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{  github.ref_name }}'
   #   steps:
-  #   - name: Execute SSH commmands on remote server
-  #     uses: JimCronqvist/action-ssh@master
+  #   - name: executing remote ssh commands using password
+  #     uses: appleboy/ssh-action@v1.0.3
   #     with:
-  #       hosts: 'root@146.190.103.98test'
-  #       privateKey: ${{ secrets.My_PRIVATE_KEY }}
-  #       command: |
-  #         docker logout ghcr.io
-  #         docker login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}  ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}
-  #         docker rm -f ${{ env.CONTAINER_NAME }}
-  #         docker pull ${{ env.DOCKER_IMAGE_URL }}
-  #         docker run --restart=always -d --name ${{ env.CONTAINER_NAME }} -p 9002:8080 ${{ env.DOCKER_IMAGE_URL }}
+  #       host: '146.190.103.98'
+  #       username: 'root'
+  #       password: '$Admin_1jj395qu'
+  #       port: '22'
+  #       script: |
+  #         whoami
+
+  auto-deploy-docker-job:
+    needs: release-docker-image-job
+    # runs-on: ubuntu-latest
+    runs-on: self-hosted
+    env:
+      CONTAINER_NAME: 'akenarin-node-app'
+      DOCKER_IMAGE_URL: 'ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{  github.ref_name }}'
+    steps:
+    - name: Execute SSH commmands on remote server
+      uses: JimCronqvist/action-ssh@master
+      with:
+        hosts: 'root@146.190.103.98'
+        privateKey: ${{ secrets.MY_PRIVATE_KEY }}
+        command: |
+          docker logout ghcr.io
+          docker login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}  ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}
+          docker rm -f ${{ env.CONTAINER_NAME }}
+          docker pull ${{ env.DOCKER_IMAGE_URL }}
+          docker run --restart=always -d --name ${{ env.CONTAINER_NAME }} -p 9002:8080 ${{ env.DOCKER_IMAGE_URL }}
         
 
 
