@@ -22,5 +22,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "BangchakAuthService.dll"]
-
-# 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
